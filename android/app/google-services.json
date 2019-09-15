@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1060078206004",
+    "firebase_url": "https://mysterytour-216007.firebaseio.com",
+    "project_id": "mysterytour-216007",
+    "storage_bucket": "mysterytour-216007.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060078206004:android:4045fd0f43efb832641e61",
+        "android_client_info": {
+          "package_name": "com.example.mysterytour"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1060078206004-gql45iirp5j3b69tia5nd9isinrmuh8l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBii0FvAvwqfIopJN7kKHBB57sbdehfOi4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1060078206004-gql45iirp5j3b69tia5nd9isinrmuh8l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1060078206004-v65ut83nfcd6097vccl7m17f26f6bqvg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mysterytour"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
