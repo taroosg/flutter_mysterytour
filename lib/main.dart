@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_twitter_login/flutter_twitter_login.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() => runApp(MyApp());
+// void main() => runApp(MyApp());
+Future main() async {
+  await DotEnv().load('.env');
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -65,8 +70,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   TwitterLogin twitterInstance = new TwitterLogin(
-    consumerKey: "G15jSwftD29Aw8vzhjYMx9MJO",
-    consumerSecret: "lorbyrUjL5PgQrWiJ8oaaSuhrpXjIBlBMsSFqb2MjGIwp9YYVs",
+    consumerKey: DotEnv().env['TWITTER_CONSUMERKEY'],
+    consumerSecret: DotEnv().env['TWITTER_CONSUMERSECRET'],
   );
 
   Future<FirebaseUser> _signInWithTwitter(BuildContext context) async {
