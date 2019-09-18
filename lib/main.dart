@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_twitter_login/flutter_twitter_login.dart';
 
 void main() => runApp(MyApp());
 
@@ -10,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Firebase Auth Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.red,
       ),
       home: MyHomePage(title: 'Firebase Auth Demo'),
     );
@@ -40,12 +42,14 @@ class _MyHomePageState extends State<MyHomePage> {
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
+    print(credential);
 
     final FirebaseUser user =
         (await _auth.signInWithCredential(credential)).user;
-    setState(() {
-      username = user.displayName;
-    });
+    // setState(() {
+    //   username = user.displayName;
+    // });
+    print(user);
     return user;
   }
 
@@ -54,6 +58,72 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       username = 'Your name';
     });
+  }
+
+  TwitterLogin twitterInstance = new TwitterLogin(
+    consumerKey: "G15jSwftD29Aw8vzhjYMx9MJO",
+    consumerSecret: "lorbyrUjL5PgQrWiJ8oaaSuhrpXjIBlBMsSFqb2MjGIwp9YYVs",
+  );
+
+  Future<FirebaseUser> _signInWithTwitter(BuildContext context) async {
+    // Scaffold.of(context).showSnackBar(new SnackBar(
+    //   content: new Text('Sign in button clicked'),
+    // ));
+
+    final TwitterLoginResult _twitterLoginResult =
+        await twitterInstance.authorize();
+    final TwitterSession _currentUserTwitterSession =
+        _twitterLoginResult.session;
+    final TwitterLoginStatus _twitterLoginStatus = _twitterLoginResult.status;
+
+    AuthCredential _authCredential = TwitterAuthProvider.getCredential(
+        authToken: _currentUserTwitterSession?.token ?? '',
+        authTokenSecret: _currentUserTwitterSession?.secret ?? '');
+
+    final FirebaseUser user =
+        (await _auth.signInWithCredential(_authCredential)).user;
+
+    // final FirebaseUser user = await _auth.signInWithTwitter(
+    //   authToken: result.session.token,
+    //   authTokenSecret: result.session.secret,
+    // );
+
+    // setState(() {
+    //   username = user.displayName;
+    // });
+
+    // UserInfoDetails userInfoDetails = new UserInfoDetails(
+    //   user.providerId,
+    //   user.uid,
+    //   user.displayName,
+    //   user.photoUrl,
+    //   user.email,
+    //   user.isAnonymous,
+    //   user.isEmailVerified,
+    //   user.phoneNumber,
+    // );
+
+    // Navigator.push(
+    //   context,
+    //   new MaterialPageRoute(
+    //     builder: (context) => new DetailedScreen(detailsUser: userInfoDetails),
+    //   ),
+    // );
+    return user;
+  }
+
+  Future<Null> _signOutWithTwitter(BuildContext context) async {
+    await twitterInstance.logOut();
+    _auth.signOut();
+
+    // Scaffold.of(context).showSnackBar(new SnackBar(
+    //   content: new Text('Sign out button clicked'),
+    // ));
+    setState(() {
+      username = 'Your name';
+    });
+
+    print('Signed out');
   }
 
   @override
@@ -91,6 +161,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       color: Colors.white,
                       textColor: Colors.black,
                       child: Text('Login with Google'),
+                    );
+                  }
+                }),
+            StreamBuilder(
+                stream: _auth.onAuthStateChanged,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return MaterialButton(
+                      onPressed: () => _signOutWithTwitter(context),
+                      color: Colors.red,
+                      textColor: Colors.white,
+                      child: Text('Signout'),
+                    );
+                  } else {
+                    return MaterialButton(
+                      onPressed: () => _signInWithTwitter(context)
+                          .then((FirebaseUser user) => setState(() {
+                                username = user.displayName;
+                                print(username);
+                              }))
+                          .catchError((e) => print(e)),
+                      color: Colors.white,
+                      textColor: Colors.black,
+                      child: Text('Login with Twitter'),
                     );
                   }
                 }),
