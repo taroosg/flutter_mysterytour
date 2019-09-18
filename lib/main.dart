@@ -33,7 +33,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String username = 'Your Name';
 
-  Future<FirebaseUser> _handleSignIn() async {
+  Future<FirebaseUser> _signInWithGoogle(BuildContext context) async {
+    Scaffold.of(context).showSnackBar(new SnackBar(
+      content: new Text('Sign in button clicked'),
+    ));
     final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
@@ -46,14 +49,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final FirebaseUser user =
         (await _auth.signInWithCredential(credential)).user;
-    // setState(() {
-    //   username = user.displayName;
-    // });
+
     print(user);
     return user;
   }
 
-  Future<void> _handleSignOut() async {
+  Future<void> _signOutWithGoogle(BuildContext context) async {
+    Scaffold.of(context).showSnackBar(new SnackBar(
+      content: new Text('Sign in button clicked'),
+    ));
     _auth.signOut();
     setState(() {
       username = 'Your name';
@@ -66,9 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   Future<FirebaseUser> _signInWithTwitter(BuildContext context) async {
-    // Scaffold.of(context).showSnackBar(new SnackBar(
-    //   content: new Text('Sign in button clicked'),
-    // ));
+    Scaffold.of(context).showSnackBar(new SnackBar(
+      content: new Text('Sign in button clicked'),
+    ));
 
     final TwitterLoginResult _twitterLoginResult =
         await twitterInstance.authorize();
@@ -83,26 +87,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final FirebaseUser user =
         (await _auth.signInWithCredential(_authCredential)).user;
 
-    // final FirebaseUser user = await _auth.signInWithTwitter(
-    //   authToken: result.session.token,
-    //   authTokenSecret: result.session.secret,
-    // );
-
-    // setState(() {
-    //   username = user.displayName;
-    // });
-
-    // UserInfoDetails userInfoDetails = new UserInfoDetails(
-    //   user.providerId,
-    //   user.uid,
-    //   user.displayName,
-    //   user.photoUrl,
-    //   user.email,
-    //   user.isAnonymous,
-    //   user.isEmailVerified,
-    //   user.phoneNumber,
-    // );
-
     // Navigator.push(
     //   context,
     //   new MaterialPageRoute(
@@ -115,10 +99,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<Null> _signOutWithTwitter(BuildContext context) async {
     await twitterInstance.logOut();
     _auth.signOut();
-
-    // Scaffold.of(context).showSnackBar(new SnackBar(
-    //   content: new Text('Sign out button clicked'),
-    // ));
+    Scaffold.of(context).showSnackBar(new SnackBar(
+      content: new Text('Sign out button clicked'),
+    ));
     setState(() {
       username = 'Your name';
     });
@@ -145,14 +128,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return MaterialButton(
-                      onPressed: () => _handleSignOut(),
+                      onPressed: () => _signOutWithGoogle(context),
                       color: Colors.red,
                       textColor: Colors.white,
                       child: Text('Signout'),
                     );
                   } else {
                     return MaterialButton(
-                      onPressed: () => _handleSignIn()
+                      onPressed: () => _signInWithGoogle(context)
                           .then((FirebaseUser user) => setState(() {
                                 username = user.displayName;
                                 print(username);
