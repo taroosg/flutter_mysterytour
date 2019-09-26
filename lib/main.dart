@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _signOutWithGoogle(BuildContext context) async {
     Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text('Sign in button clicked'),
+      content: new Text('Sign out button clicked'),
     ));
     _auth.signOut();
     setState(() {
@@ -92,12 +92,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final FirebaseUser user =
         (await _auth.signInWithCredential(_authCredential)).user;
 
-    // Navigator.push(
-    //   context,
-    //   new MaterialPageRoute(
-    //     builder: (context) => new DetailedScreen(detailsUser: userInfoDetails),
-    //   ),
-    // );
     return user;
   }
 
