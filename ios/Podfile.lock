@@ -159,7 +159,7 @@ DEPENDENCIES:
   - google_sign_in (from `.symlinks/plugins/google_sign_in/ios`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  https://github.com/CocoaPods/Specs.git:
     - BoringSSL-GRPC
     - Fabric
     - Firebase
@@ -235,4 +235,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 5cc5f19156ae1f754a13331bdfeea97a11c5e815
 
-COCOAPODS: 1.6.1
+COCOAPODS: 1.8.3

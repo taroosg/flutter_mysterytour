@@ -4,175 +4,281 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_twitter_login/flutter_twitter_login.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_auth_buttons/flutter_auth_buttons.dart';
+import 'package:provider/provider.dart';
 
 // void main() => runApp(MyApp());
 Future main() async {
   await DotEnv().load('.env');
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Firebase Auth Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
+  // runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      builder: (context) => _AuthChangeNotifier(),
+      child: new MaterialApp(
+        title: 'Navigation with Routes',
+        routes: <String, WidgetBuilder>{
+          '/': (_) => new Splash(),
+          '/login': (_) => new Login(),
+          '/home': (_) => new Home(),
+          '/next': (_) => new Next(),
+        },
       ),
-      home: MyHomePage(title: 'Firebase Auth Demo'),
-    );
-  }
+    ),
+  );
+
+  // runApp(new MaterialApp(
+  //   title: 'Navigation with Routes',
+  //   routes: <String, WidgetBuilder>{
+  //     '/': (_) => new Splash(),
+  //     '/login': (_) => new Login(),
+  //     '/home': (_) => new Home(),
+  //     '/next': (_) => new Next(),
+  //   },
+  // ));
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-  final String title;
+// String userId;
 
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
+// 認証とユーザのステート管理
+class _AuthChangeNotifier with ChangeNotifier {
+  // 認証関連の情報
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  String username = 'Your Name';
-
-  Future<FirebaseUser> _signInWithGoogle(BuildContext context) async {
-    Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text('Sign in button clicked'),
-    ));
-    final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    print(credential);
-
-    final FirebaseUser user =
-        (await _auth.signInWithCredential(credential)).user;
-
-    print(user);
-    return user;
-  }
-
-  Future<void> _signOutWithGoogle(BuildContext context) async {
-    Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text('Sign out button clicked'),
-    ));
-    _auth.signOut();
-    setState(() {
-      username = 'Your name';
-    });
-  }
-
-  TwitterLogin twitterInstance = new TwitterLogin(
+  final TwitterLogin twitterInstance = new TwitterLogin(
     consumerKey: DotEnv().env['TWITTER_CONSUMERKEY'],
     consumerSecret: DotEnv().env['TWITTER_CONSUMERSECRET'],
   );
 
-  Future<FirebaseUser> _signInWithTwitter(BuildContext context) async {
-    Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text('Sign in button clicked'),
-    ));
+  // ユーザ情報など
+  String username;
+  FirebaseUser _user;
+  AuthCredential _credential;
 
+  String userId;
+
+  String get getDisplayUid => _user.uid;
+
+  // google認証
+  Future<FirebaseUser> _signInWithGoogle() async {
+    // Future<FirebaseUser> _signInWithGoogle(BuildContext context) async {
+    // Scaffold.of(context).showSnackBar(new SnackBar(
+    //   content: new Text('Sign in button clicked'),
+    // ));
+    final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+    _credential = GoogleAuthProvider.getCredential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    print(_credential);
+    _user = (await _auth.signInWithCredential(_credential)).user;
+    print(_user.uid);
+    this.userId = _user.uid;
+    notifyListeners();
+    return _user;
+  }
+
+  // twitter認証
+  Future<FirebaseUser> _signInWithTwitter(BuildContext context) async {
     final TwitterLoginResult _twitterLoginResult =
         await twitterInstance.authorize();
     final TwitterSession _currentUserTwitterSession =
         _twitterLoginResult.session;
     final TwitterLoginStatus _twitterLoginStatus = _twitterLoginResult.status;
-
-    AuthCredential _authCredential = TwitterAuthProvider.getCredential(
+    _credential = TwitterAuthProvider.getCredential(
         authToken: _currentUserTwitterSession?.token ?? '',
         authTokenSecret: _currentUserTwitterSession?.secret ?? '');
-
-    final FirebaseUser user =
-        (await _auth.signInWithCredential(_authCredential)).user;
-
-    return user;
+    print(_credential);
+    _user = (await _auth.signInWithCredential(_credential)).user;
+    print(_user.uid);
+    userId = _user.uid;
+    notifyListeners();
+    return _user;
   }
 
-  Future<Null> _signOutWithTwitter(BuildContext context) async {
-    await twitterInstance.logOut();
+  // サインアウト
+  Future<void> _signOut(BuildContext context) async {
+    // await twitterInstance.logOut();
+    print(userId);
     _auth.signOut();
-    Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text('Sign out button clicked'),
-    ));
-    setState(() {
-      username = 'Your name';
-    });
+    _user = null;
+    _credential = null;
+    username = 'Your name';
+    userId = null;
+    notifyListeners();
+  }
 
-    print('Signed out');
+  void uid() {
+    // increment()が呼ばれると、Listenerたちに変更を通知する
+    notifyListeners();
+  }
+}
+
+// スプラッシュ画面
+class Splash extends StatefulWidget {
+  @override
+  _SplashState createState() => new _SplashState();
+}
+
+class _SplashState extends State<Splash> {
+  @override
+  void initState() {
+    super.initState();
+    new Future.delayed(const Duration(seconds: 1))
+        .then((value) => handleTimeout());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              '$username',
-              style: Theme.of(context).textTheme.display1,
-            ),
-            StreamBuilder(
-                stream: _auth.onAuthStateChanged,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return MaterialButton(
-                      onPressed: () => _signOutWithGoogle(context),
-                      color: Colors.red,
-                      textColor: Colors.white,
-                      child: Text('Signout'),
-                    );
-                  } else {
-                    return MaterialButton(
-                      onPressed: () => _signInWithGoogle(context)
-                          .then((FirebaseUser user) => setState(() {
-                                username = user.displayName;
-                                print(username);
-                              }))
-                          .catchError((e) => print(e)),
-                      color: Colors.white,
-                      textColor: Colors.black,
-                      child: Text('Login with Google'),
-                    );
-                  }
-                }),
-            StreamBuilder(
-                stream: _auth.onAuthStateChanged,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return MaterialButton(
-                      onPressed: () => _signOutWithTwitter(context),
-                      color: Colors.red,
-                      textColor: Colors.white,
-                      child: Text('Signout'),
-                    );
-                  } else {
-                    return MaterialButton(
-                      onPressed: () => _signInWithTwitter(context)
-                          .then((FirebaseUser user) => setState(() {
-                                username = user.displayName;
-                                print(username);
-                              }))
-                          .catchError((e) => print(e)),
-                      color: Colors.white,
-                      textColor: Colors.black,
-                      child: Text('Login with Twitter'),
-                    );
-                  }
-                }),
-          ],
+    return new Scaffold(
+      body: new Center(
+        // スプラッシュアニメーション
+        child: const CircularProgressIndicator(
+          backgroundColor: Colors.black,
         ),
       ),
+    );
+  }
+
+  void handleTimeout() {
+    // ログイン画面へ
+    Navigator.of(context).pushReplacementNamed("/login");
+  }
+}
+
+// googleログインボタン
+class GoogleSigninWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GoogleSignInButton(
+      onPressed: () => Provider.of<_AuthChangeNotifier>(context, listen: true)
+          ._signInWithGoogle()
+          .then((FirebaseUser user) =>
+              Navigator.of(context).pushReplacementNamed("/home"))
+          .catchError((e) => print(e)),
+      darkMode: true, // default: false
+    );
+  }
+}
+
+// twitterログインボタン
+class TwitterSigninWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return TwitterSignInButton(
+      onPressed: () => Provider.of<_AuthChangeNotifier>(context, listen: true)
+          ._signInWithTwitter(context)
+          .then((FirebaseUser user) =>
+              Navigator.of(context).pushReplacementNamed("/home"))
+          .catchError((e) => print(e)),
+    );
+  }
+}
+
+// ログアウトボタン
+class SignoutWisget extends StatelessWidget {
+  Widget build(BuildContext context) {
+    return RaisedButton(
+      child: const Text("Logout"),
+      onPressed: () {
+        // 確認ダイアログ表示
+        showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return new AlertDialog(
+              content: const Text('Do you want logout?'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: const Text('No'),
+                  onPressed: () {
+                    // 引数をfalseでダイアログ閉じる
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+                new FlatButton(
+                  child: const Text('Yes'),
+                  onPressed: () {
+                    // 引数をtrueでダイアログ閉じる
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        ).then<void>((aBool) {
+          // ダイアログがYESで閉じられたら...
+          if (aBool) {
+            //  ログアウト処理
+            Provider.of<_AuthChangeNotifier>(context, listen: true)
+                ._signOut(context);
+            // 画面をすべて除いてスプラッシュを表示
+            Navigator.pushAndRemoveUntil(
+                context,
+                new MaterialPageRoute(builder: (context) => new Splash()),
+                (_) => false);
+          }
+        });
+      },
+    );
+  }
+}
+
+// ログイン画面
+class Login extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // ここからChangeNotifierを下層に渡す
+    return ChangeNotifierProvider<_AuthChangeNotifier>(
+      builder: (_) => _AuthChangeNotifier(),
+      child: Column(
+        // crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          GoogleSigninWidget(),
+          TwitterSigninWidget(),
+        ],
+      ),
+    );
+  }
+}
+
+// ホーム画面
+class Home extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<_AuthChangeNotifier>(context);
+    print(auth.userId);
+
+    return new Scaffold(
+      appBar: new AppBar(
+        title: const Text("Home"),
+      ),
+      body: new Center(
+        child: new RaisedButton(
+          child: Text('Launch Next Screen'),
+          onPressed: () {
+            // その他の画面��
+            Navigator.of(context).pushNamed("/next");
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// 詳細画面
+class Next extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<_AuthChangeNotifier>(context);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        // userId != null ? Text(userId) : Container(),
+        SignoutWisget(),
+      ],
     );
   }
 }
